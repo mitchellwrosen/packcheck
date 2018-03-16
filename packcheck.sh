@@ -686,9 +686,15 @@ ensure_cabal() {
   then
     local root
     local cfg
+    local cfgdir
     root=$($STACKCMD path --stack-root) || die "while getting stack root"
-    cfg="$root/global-project/stack.yaml"
-    test -e "$cfg" || echo "resolver: $RESOLVER" > "$cfg"
+    cfgdir="$root/global-project"
+    cfg="$cfgdir/stack.yaml"
+    if test ! -e "$cfg"
+    then
+      mkdir -p "$cfgdir" || die "Cannot mkdir $cfgdir"
+      echo "resolver: $RESOLVER" > "$cfg" || die "Cannot create $cfg"
+    fi
     run_verbose_errexit $STACKCMD --stack-yaml "$cfg" install cabal-install
   fi
 
