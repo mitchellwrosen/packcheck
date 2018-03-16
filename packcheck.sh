@@ -685,9 +685,11 @@ ensure_cabal() {
   if test -z "$(which_cmd cabal)" -a -n "$(need_stack)"
   then
     local root
+    local cfg
     root=$($STACKCMD path --stack-root) || die "while getting stack root"
-    run_verbose_errexit $STACKCMD \
-      --stack-yaml $root/global-project/stack.yaml install cabal-install
+    cfg="$root/global-project/stack.yaml"
+    test -e "$cfg" || echo "resolver: $RESOLVER" > "$cfg"
+    run_verbose_errexit $STACKCMD --stack-yaml "$cfg" install cabal-install
   fi
 
   require_cmd cabal
