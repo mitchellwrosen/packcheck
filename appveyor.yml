@@ -43,13 +43,6 @@ environment:
     PACKCHECK_GITHUB_URL: "https://raw.githubusercontent.com/harendra-kumar/packcheck"
     PACKCHECK_GITHUB_COMMIT: "8eb9d8721e1a3a5f6be76ad24f9ea210d28b368b"
 
-cache:
-  - "%STACK_ROOT%"
-  - "%LOCAL_BIN%"
-  - "%APPDATA%\\cabal"
-  - "%APPDATA%\\ghc"
-# - "%LOCALAPPDATA%\\Programs\\stack"
-
 clone_folder: "c:\\pkg"
 build: off
 
