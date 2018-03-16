@@ -693,7 +693,7 @@ ensure_cabal() {
     if test ! -e "$cfg"
     then
       mkdir -p "$cfgdir" || die "Cannot mkdir $cfgdir"
-      echo "resolver: $RESOLVER" > "$cfg" || die "Cannot create $cfg"
+      echo -e "resolver: $RESOLVER\npackages: []" > "$cfg" || die "Cannot create $cfg"
     fi
     run_verbose_errexit $STACKCMD --stack-yaml "$cfg" install cabal-install
   fi
