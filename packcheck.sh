@@ -401,11 +401,27 @@ need_stack() {
   fi
 }
 
+# $1: be verbose about why we need cabal
 need_cabal() {
-  if test "$BUILD" = cabal -o -z "$DISABLE_SDIST_BUILD"
+  if test "$BUILD" = cabal
   then
-    echo true
+    test -n "$1" && echo "Need cabal-install because 'BUILD=$BUILD'"
+    return 0
   fi
+
+  if test -z "$DISABLE_SDIST_BUILD"
+  then
+    test -n "$1" && echo "Need cabal-install because 'DISABLE_SDIST_BUILD=$DISABLE_SDIST_BUILD'"
+    return 0
+  fi
+
+  if test -n "$TEST_INSTALL"
+  then
+    test -n "$1" && echo "Need cabal-install because 'TEST_INSTALL=$TEST_INSTALL'"
+    return 0
+  fi
+
+  return 1
 }
 
 # $1: varname
@@ -668,7 +684,10 @@ ensure_cabal() {
   # cabal-install, otherwise it may fail due to dependency conflict.
   if test -z "$(which_cmd cabal)" -a -n "$(need_stack)"
   then
-    (cd /; unset STACK_YAML; run_verbose_errexit $STACKCMD install cabal-install)
+    local root
+    root=$($STACKCMD path --stack-root) || die "while getting stack root"
+    run_verbose_errexit $STACKCMD \
+      --stack-yaml $root/global-project/stack.yaml install cabal-install
   fi
 
   require_cmd cabal
@@ -684,6 +703,7 @@ ensure_stack_yaml() {
     require_file $STACK_YAML
   elif test ! -e stack.yaml
   then
+    echo "Need cabal-install for 'stack init' to generate a stack.yaml"
     ensure_cabal
     # solver seems to be broken with latest cabal
     echo "Trying to generate a stack.yaml"
@@ -957,8 +977,7 @@ build_compile () {
   # ensure_msys_tools "tar" && require_cmd tar
 
   ensure_ghc && echo
-  test -n "$(need_cabal)" \
-    && ensure_cabal ${OS_APP_HOME}/${OS_LOCAL_DIR}/bin
+  need_cabal 'verbose' && ensure_cabal ${OS_APP_HOME}/${OS_LOCAL_DIR}/bin
 
   # use the stack installed 7z instead. depends on ensure ghc where we setup
   # stack paths.
@@ -969,7 +988,7 @@ build_compile () {
 
   # ---------Create dist, unpack, install deps, test--------
   show_step "Build tools: package level and global configuration"
-  test -n "$(need_cabal)" && ensure_cabal_config
+  need_cabal && ensure_cabal_config
   test -n "$(need_stack)" && ensure_stack_yaml
 
   if test -z "$DISABLE_SDIST_BUILD"
