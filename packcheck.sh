@@ -674,28 +674,32 @@ cabal_use_mirror() {
   fi
 }
 
+# We need to ignore the project's stack.yaml when installing
+# cabal-install, otherwise it may fail due to dependency conflicts.
+#
+# On CI machines if our repo is cloned in the top dir then there is no way to
+# teach stack to ignore the project's stack.yaml. We cannot change our
+# directory to go above it. Because we have a project stack.yaml, stack does
+# not even create a global stack.yaml. So we work it around by creating a new
+# package and installing cabal via that.
+install_cabal () {
+    mkdir -p .packcheck/cabal-install || exit 1
+    cd .packcheck/cabal-install || exit 1
+    run_verbose_errexit $STACKCMD new --bare placeholder
+    run_verbose_errexit $STACKCMD install cabal-install
+    cd ../..
+}
+
 # $1: Directory to install cabal in
 ensure_cabal() {
   # We can only do this after ghc is installed.
   # We need cabal to retrieve the package version as well as for the solver
   # Also when we are using stack for cabal builds use stack installed cabal
   # We are assuming CI cache will be per resolver so we can cache the bin
-  # We need to ignore the project's stack.yaml when installing
-  # cabal-install, otherwise it may fail due to dependency conflict.
+
   if test -z "$(which_cmd cabal)" -a -n "$(need_stack)"
   then
-    local root
-    local cfg
-    local cfgdir
-    root=$($STACKCMD path --stack-root) || die "while getting stack root"
-    cfgdir="$root/global-project"
-    cfg="$cfgdir/stack.yaml"
-    if test ! -e "$cfg"
-    then
-      mkdir -p "$cfgdir" || die "Cannot mkdir $cfgdir"
-      echo -e "resolver: $RESOLVER\npackages: []" > "$cfg" || die "Cannot create $cfg"
-    fi
-    run_verbose_errexit $STACKCMD --stack-yaml "$cfg" install cabal-install
+    install_cabal
   fi
 
   require_cmd cabal
