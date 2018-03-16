@@ -39,7 +39,7 @@ env:
   # If you have not committed packcheck.sh in your repo at PACKCHECK_LOCAL_PATH
   # then it is automatically pulled from this URL.
   - PACKCHECK_GITHUB_URL="https://raw.githubusercontent.com/harendra-kumar/packcheck"
-  - PACKCHECK_GITHUB_COMMIT="8459635410cc8f87f25c407cf0ba50aaaf43f92a"
+  - PACKCHECK_GITHUB_COMMIT="b796cdb5f01a6dc2477c0def1dd6f05c117ea9cc"
 
 notifications:
   email: false
@@ -166,6 +166,7 @@ script:
     if test ! -e "$PACKCHECK_LOCAL_PATH"; then $CURL -sL -o "$PACKCHECK_LOCAL_PATH" $PACKCHECK_URL; fi;
     chmod +x $PACKCHECK_LOCAL_PATH
 
+    export PATH=/bin:/usr/bin
     add_path GHCVER   ghc
     add_path CABALVER cabal
 
