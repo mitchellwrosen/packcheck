@@ -182,6 +182,7 @@ SAFE_ENVVARS="\
   DISABLE_TEST \
   DISABLE_DOCS \
   PATH \
+  TOOLS_DIR \
   STACKVER \
   STACK_YAML \
   STACK_OPTIONS \
@@ -302,6 +303,7 @@ show_help() {
   help_envvar DISABLE_TEST "[y] Do not run tests, default is to run tests"
   help_envvar DISABLE_DOCS "[y] Do not build haddocks, default is to build docs"
   help_envvar PATH "[path] Set PATH explicitly for predictable builds"
+  help_envvar TOOLS_DIR "[dir] A dir such that you can find tools in TOOLS_DIR/ghc/ghc-8.4.1/bin etc."
   help_envvar TEST_INSTALL "[y] DESTRUCTIVE! Install the package after building (force install with cabal)"
 
   show_step1 "Advanced stack build parameters or env variables"
@@ -606,7 +608,7 @@ ensure_stack() {
     fi
   fi
 
-  test -z "$STACKVER" || check_version stack $STACKVER
+  test -z "$STACKVER" || check_version_die stack $STACKVER
   # Set the real version of stack
   STACKVER=$(stack --numeric-version) || exit 1
 
@@ -653,10 +655,68 @@ use_stack_paths() {
 check_version() {
   local real_ver=$($1 --numeric-version)
 
+  echo "[$1], [$2]"
   # Match that the expected version is a prefix of real
   # Do not check when the expected version is head
-  test "${real_ver#$2}" != ${real_ver} -o $2 = head || \
-    die "Wrong $1 version [$real_ver] expected [$2]"
+  test "${real_ver#$2}" != ${real_ver} -o $2 = head
+}
+
+# $1: tool name (used only for ghc, cabal and stack)
+# $2: expected version
+check_version_die() {
+  check_version $1 $2 || \
+    die "Wrong $1 version [$($1 --numeric-version)] expected [$2]"
+}
+
+# Remove a path from the PATH envvar
+# $1: path component to remove
+function path_remove {
+  # Delete path by parts so we can never accidentally remove sub paths
+  PATH=${PATH//":$1:"/":"} # delete any instances in the middle
+  PATH=${PATH/#"$1:"/} # delete any instance at the beginning
+  PATH=${PATH/%":$1"/} # delete any instance at the end
+}
+
+# Find ghc/cabal having the given version prefix in PATH or in a version
+# suffixed directory at TOOLS_DIR, and check if it matches the requested
+# version. If we found the requested binary we make sure that it is in the
+# PATH.
+#
+# $1: binary name (e.g. ghc or cabal)
+# $2: binary version prefix (e.g. 8 or 8.0 or 8.0.1)
+find_binary () {
+  local binary
+
+  binary="$(which_cmd $1)"
+  while test -n "$binary"
+  do
+    if test -z "$2" || check_version $binary $2
+    then
+      return
+    else
+      # remove it from the path and search again
+      path_remove $(dirname $binary)
+      binary="$(which_cmd $1)"
+    fi
+  done
+
+  test -n "$TOOLS_DIR" || return
+
+  # Find if we have a binary in TOOLS_DIR
+  local dir
+  dir=$(echo ${TOOLS_DIR}/$1/${1}-$2*/ | tr ' ' '\n' | sort | tail -1)
+  if test "$dir" != "${binary}-$2*"
+  then
+    if test -z "$2" || check_version ${dir}/bin/$1 $2
+    then
+      if [[ $dir != /* ]]
+      then
+        dir=`pwd`/$dir
+      fi
+      PATH=$dir/bin:$PATH
+      export PATH
+    fi
+  fi
 }
 
 ensure_ghc() {
@@ -668,11 +728,13 @@ ensure_ghc() {
     use_stack_paths
     echo
   fi
+
+  find_binary ghc "$GHCVER"
   require_cmd ghc && \
     echo "$(ghc --version) [$(ghc --print-project-git-commit-id 2> /dev/null || echo '?')]"
   if test -n "$GHCVER"
   then
-    check_version ghc $GHCVER
+    check_version_die ghc $GHCVER
     # If the user specified GHCVER then use it as system-ghc
     # Stack will still silently choose its own ghc if the ghc does not match
     # the snapshot.
@@ -741,9 +803,9 @@ stack_install_tool () {
 ensure_cabal() {
   # We can only do this after ghc is installed.
   # We need cabal to retrieve the package version as well as for the solver
-  # Also when we are using stack for cabal builds use stack installed cabal
   # We are assuming CI cache will be per resolver so we can cache the bin
 
+  find_binary cabal "$CABALVER"
   if test -z "$(which_cmd cabal)" -a -n "$(need_stack)"
   then
     stack_install_tool cabal-install
@@ -751,7 +813,7 @@ ensure_cabal() {
 
   require_cmd cabal
   cabal --version
-  test -z "$CABALVER" || check_version cabal $CABALVER
+  test -z "$CABALVER" || check_version_die cabal $CABALVER
   # Set the real version of cabal
   CABALVER=$(cabal --numeric-version) || exit 1
 }
