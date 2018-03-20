@@ -720,7 +720,10 @@ find_binary () {
 }
 
 ensure_ghc() {
-  if test -n "$(need_stack)" -a -z "$GHCVER"
+  # If there is a ghc in PATH then use that otherwise install it using stack
+  find_binary ghc "$GHCVER"
+  found="$(which_cmd ghc)"
+  if test -n "$(need_stack)" -a -z "$found"
   then
     # Use stack supplied ghc
     echo "$STACKCMD setup"
@@ -729,7 +732,6 @@ ensure_ghc() {
     echo
   fi
 
-  find_binary ghc "$GHCVER"
   require_cmd ghc && \
     echo "$(ghc --version) [$(ghc --print-project-git-commit-id 2> /dev/null || echo '?')]"
   if test -n "$GHCVER"
