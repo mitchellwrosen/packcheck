@@ -706,6 +706,7 @@ find_binary () {
     dir=$(echo ${TOOLS_DIR}/$1/$2*/ | tr ' ' '\n' | sort | tail -1)
   else
     dir=$(echo ${TOOLS_DIR}/$1/[0-9]*/ | tr ' ' '\n' | sort | tail -1)
+    test -x "${dir}/bin/$1" || dir="${TOOLS_DIR}/$1/head"
   fi
 
   echo "Got [$dir]"
@@ -1075,7 +1076,7 @@ install_test() {
       (cd dist && run_verbose_errexit cabal install --force-reinstalls "${1}.tar.gz")
       remove_pkg_executables $OS_APP_HOME/$OS_CABAL_DIR/bin ;;
     cabal-new)
-      echo "WARNING! TEST_INSTALL does not work with cabal-new as of now" ;;
+      echo "WARNING! Because of a cabal issue, TEST_INSTALL does not work with cabal-new" ;;
   esac
 }
 
