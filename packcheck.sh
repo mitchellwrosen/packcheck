@@ -303,7 +303,7 @@ show_help() {
   help_envvar DISABLE_TEST "[y] Do not run tests, default is to run tests"
   help_envvar DISABLE_DOCS "[y] Do not build haddocks, default is to build docs"
   help_envvar PATH "[path] Set PATH explicitly for predictable builds"
-  help_envvar TOOLS_DIR "[dir] A dir such that you can find tools in TOOLS_DIR/ghc/ghc-8.4.1/bin etc."
+  help_envvar TOOLS_DIR "[dir] A dir to find tools by version like TOOLS_DIR/ghc/8.4.1/bin"
   help_envvar TEST_INSTALL "[y] DESTRUCTIVE! Install the package after building (force install with cabal)"
 
   show_step1 "Advanced stack build parameters or env variables"
@@ -357,6 +357,9 @@ check_all_boolean_vars () {
 
 show_build_command() {
   check_all_boolean_vars
+
+  echo "You can use the following command to reproduce this build:"
+  echo
   echo -n "$0 $BUILD "
   for i in $SAFE_ENVVARS
   do
@@ -703,7 +706,7 @@ find_binary () {
 
   # Find if we have a binary in TOOLS_DIR
   local dir
-  dir=$(echo ${TOOLS_DIR}/$1/${1}-$2*/ | tr ' ' '\n' | sort | tail -1)
+  dir=$(echo ${TOOLS_DIR}/$1/$2*/ | tr ' ' '\n' | sort | tail -1)
   if test -x "${dir}/bin/$1"
   then
     if test -z "$2" || check_version "${dir}/bin/$1" $2
