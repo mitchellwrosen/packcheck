@@ -66,7 +66,7 @@ retry_cmd() {
 # to clear the cache if needed).
 
 which_cmd() {
-  hash -r && type -P "$1"
+  hash -r && type -P "$1" || true
 }
 
 require_cmd () {
@@ -686,7 +686,7 @@ function path_remove {
 find_binary () {
   local binary
 
-  binary="$(which_cmd $1)"
+  binary=$(which_cmd $1)
   while test -n "$binary"
   do
     if test -z "$2" || check_version $binary $2
@@ -704,23 +704,18 @@ find_binary () {
   # Find if we have a binary in TOOLS_DIR
   local dir
   dir=$(echo ${TOOLS_DIR}/$1/${1}-$2*/ | tr ' ' '\n' | sort | tail -1)
-  echo "find_binary [$dir]"
   if test -x "${dir}/bin/$1"
   then
-    echo "find_binary exists"
     if test -z "$2" || check_version "${dir}/bin/$1" $2
     then
-      echo "adding path"
       if [[ $dir != /* ]]
       then
         dir=`pwd`/$dir
       fi
       PATH=$dir/bin:$PATH
       export PATH
-      echo "added path [$dir]"
     fi
   fi
-  echo "done"
   return 0
 }
 
@@ -783,6 +778,7 @@ cabal_use_mirror() {
 #
 # $1 tool name
 stack_install_tool () {
+    rm -rf .packcheck/tool-install
     mkdir -p .packcheck/tool-install || exit 1
     cd .packcheck/tool-install || exit 1
 
@@ -812,9 +808,7 @@ ensure_cabal() {
   # We need cabal to retrieve the package version as well as for the solver
   # We are assuming CI cache will be per resolver so we can cache the bin
 
-  echo "ensure_cabal......"
   find_binary cabal "$CABALVER"
-  echo "check_cabal......"
   if test -z "$(which_cmd cabal)" -a -n "$(need_stack)"
   then
     stack_install_tool cabal-install
