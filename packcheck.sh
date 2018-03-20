@@ -692,7 +692,7 @@ find_binary () {
   do
     if test -z "$2" || check_version $binary $2
     then
-      return
+      return 0
     else
       # remove it from the path and search again
       path_remove $(dirname $binary)
@@ -700,7 +700,7 @@ find_binary () {
     fi
   done
 
-  test -n "$TOOLS_DIR" || return
+  test -n "$TOOLS_DIR" || return 0
 
   # Find if we have a binary in TOOLS_DIR
   local dir
@@ -717,6 +717,7 @@ find_binary () {
       export PATH
     fi
   fi
+  return 0
 }
 
 ensure_ghc() {
@@ -807,7 +808,9 @@ ensure_cabal() {
   # We need cabal to retrieve the package version as well as for the solver
   # We are assuming CI cache will be per resolver so we can cache the bin
 
+  echo "ensure_cabal......"
   find_binary cabal "$CABALVER"
+  echo "check_cabal......"
   if test -z "$(which_cmd cabal)" -a -n "$(need_stack)"
   then
     stack_install_tool cabal-install
