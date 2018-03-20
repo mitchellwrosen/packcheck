@@ -706,6 +706,9 @@ find_binary () {
 
   # Find if we have a binary in TOOLS_DIR
   local dir
+  echo "All"
+  echo ${TOOLS_DIR}/$1/$2*/ | tr ' ' '\n' | sort
+  echo "All end"
   dir=$(echo ${TOOLS_DIR}/$1/$2*/ | tr ' ' '\n' | sort | tail -1)
   echo "Got [$dir]"
   if test -x "${dir}/bin/$1"
