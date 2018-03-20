@@ -511,14 +511,6 @@ EOF
   test "$BUILD" = stack -o "$BUILD" = cabal -o "$BUILD" = "cabal-new" || \
     die "build [$BUILD] can only be 'stack','cabal' or 'cabal-new'"
 
-  if test "$BUILD" = cabal -o "$BUILD" = "cabal-new"
-  then
-    if test -n "$GHCVER" -a -n "$RESOLVER"
-    then
-      die "GHCVER and RESOLVER cannot be used together in cabal build."
-    fi
-  fi
-
   if test -n "$CHECK_ENV"
   then
     if test "$BUILD" != cabal -a "$BUILD" != "cabal-new"
@@ -709,7 +701,13 @@ find_binary () {
   echo "All"
   echo ${TOOLS_DIR}/$1/$2*/ | tr ' ' '\n' | sort
   echo "All end"
-  dir=$(echo ${TOOLS_DIR}/$1/$2*/ | tr ' ' '\n' | sort | tail -1)
+  if test -n "$2"
+  then
+    dir=$(echo ${TOOLS_DIR}/$1/$2*/ | tr ' ' '\n' | sort | tail -1)
+  else
+    dir=$(echo ${TOOLS_DIR}/$1/[0-9]*/ | tr ' ' '\n' | sort | tail -1)
+  fi
+
   echo "Got [$dir]"
   if test -x "${dir}/bin/$1"
   then
