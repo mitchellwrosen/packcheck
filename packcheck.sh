@@ -707,16 +707,20 @@ find_binary () {
   # Find if we have a binary in TOOLS_DIR
   local dir
   dir=$(echo ${TOOLS_DIR}/$1/$2*/ | tr ' ' '\n' | sort | tail -1)
+  echo "Got [$dir]"
   if test -x "${dir}/bin/$1"
   then
+    echo "is executable"
     if test -z "$2" || check_version "${dir}/bin/$1" $2
     then
+      echo "version matches"
       if [[ $dir != /* ]]
       then
         dir=`pwd`/$dir
       fi
       PATH=$dir/bin:$PATH
       export PATH
+      echo "PATH=[$PATH]"
     fi
   fi
   return 0
