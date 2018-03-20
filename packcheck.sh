@@ -655,7 +655,6 @@ use_stack_paths() {
 check_version() {
   local real_ver=$($1 --numeric-version)
 
-  echo "[$1], [$2]"
   # Match that the expected version is a prefix of real
   # Do not check when the expected version is head
   test "${real_ver#$2}" != ${real_ver} -o $2 = head
@@ -705,18 +704,23 @@ find_binary () {
   # Find if we have a binary in TOOLS_DIR
   local dir
   dir=$(echo ${TOOLS_DIR}/$1/${1}-$2*/ | tr ' ' '\n' | sort | tail -1)
-  if test "$dir" != "${binary}-$2*"
+  echo "find_binary [$dir]"
+  if test -x "${dir}/bin/$1"
   then
-    if test -z "$2" || check_version ${dir}/bin/$1 $2
+    echo "find_binary exists"
+    if test -z "$2" || check_version "${dir}/bin/$1" $2
     then
+      echo "adding path"
       if [[ $dir != /* ]]
       then
         dir=`pwd`/$dir
       fi
       PATH=$dir/bin:$PATH
       export PATH
+      echo "added path [$dir]"
     fi
   fi
+  echo "done"
   return 0
 }
 
