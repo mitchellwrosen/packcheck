@@ -67,17 +67,14 @@ matrix:
   # are: STACK_YAML, STACK_OPTIONS, STACK_BUILD_OPTIONS
   # --------------------------------------------------------------------------
 
-  # ghc-7.10.3
-  #- env: BUILD=stack RESOLVER=lts-6
+  #- env: BUILD=stack RESOLVER=lts-6 GHCVER=7.10.3
   #  addons: {apt: {packages: [cabal-install-1.22], sources: [hvr-ghc]}}
 
-  # ghc-8.0.2
-  - env: BUILD=stack RESOLVER=lts-9
+  - env: BUILD=stack RESOLVER=lts-9 GHCVER=8.0.2
     addons: {apt: {packages: [cabal-install-1.24], sources: [hvr-ghc]}}
 
-  # ghc-8.2.2
   # Use cabal-install-1.24 for stack solver to work
-  - env: BUILD=stack RESOLVER=lts-11
+  - env: BUILD=stack RESOLVER=lts-11 GHCVER=8.2.2
     addons: {apt: {packages: [cabal-install-1.24], sources: [hvr-ghc]}}
 
   # Use cabal-install-1.24 for stack solver to work
@@ -95,17 +92,17 @@ matrix:
   # CABAL_CONFIGURE_OPTIONS (cabal), CABAL_NEWBUILD_OPTIONS (cabal-new)
   # --------------------------------------------------------------------------
 
-  #- env: BUILD=cabal-new
+  #- env: BUILD=cabal-new GHCVER=7.10.3
   #  addons: {apt: {packages: [cabal-install-1.22,ghc-7.10.3], sources: [hvr-ghc]}}
 
-  #- env: BUILD=cabal-new
+  #- env: BUILD=cabal-new GHCVER=8.0.2
   #  addons: {apt: {packages: [cabal-install-1.24,ghc-8.0.2], sources: [hvr-ghc]}}
 
   # Disabled by default as we have a cabal ghc-8.2.2 build for OSX
-  #- env: BUILD=cabal-new
+  #- env: BUILD=cabal-new GHCVER=8.2.2
   #  addons: {apt: {packages: [cabal-install-2.0,ghc-8.2.2], sources: [hvr-ghc]}}
 
-  - env: BUILD=cabal-new
+  - env: BUILD=cabal-new GHCVER=8.4.1
     addons: {apt: {packages: [cabal-install-2.2,ghc-8.4.1], sources: [hvr-ghc]}}
 
   - env: BUILD=cabal-new GHCVER=head
@@ -116,11 +113,11 @@ matrix:
   # --------------------------------------------------------------------------
 
   # GHC 8.2.2/cabal build using stack!
-  - env: BUILD=cabal-new RESOLVER=lts-11
+  - env: BUILD=cabal-new RESOLVER=lts-11 GHCVER=8.2.2
     os: osx
 
   # GHC 8.2.2/stack
-  #- env: BUILD=stack RESOLVER=lts-11
+  #- env: BUILD=stack RESOLVER=lts-11 GHCVER=8.2.2
   #  os: osx
 
   # --------------------------------------------------------------------------
