@@ -904,12 +904,13 @@ get_pkg_full_name() {
       echo "'cabal info' command failed to determine package name."
       die "Please use 'DISABLE_SDIST_BUILD=y' to avoid this issue."
     fi
+  else
+    if test "${pkgname}${full_name#$pkgname}" != "${full_name}"
+    then
+      die "Inconsistent package name [$pkgname] and package full name [$full_name]"
+    fi
   fi
 
-  if test "${pkgname}${full_name#$pkgname}" != "${full_name}"
-  then
-    die "Inconsistent package name [$pkgname] and package full name [$full_name]"
-  fi
   echo $full_name
 }
 
