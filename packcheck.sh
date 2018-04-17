@@ -891,7 +891,21 @@ get_pkg_full_name() {
   local pkgname
   local full_name
   pkgname=$(get_pkg_name) || exit 1
-  full_name=$(cabal info . | awk '{ if ($1 == "*") {print $2; exit}}') || die "cabal info failed"
+  full_name=$(cabal info . | awk '{ if ($1 == "*") {print $2; exit}}') || true
+  if test -z "$full_name"
+  then
+    if test -n "$ENABLE_INSTALL"
+    then
+      echo "'cabal info' command failed to determine package name."
+      die "Please disable install test by using 'ENABLE_INSTALL=' to avoid this issue."
+    fi
+    if test -z "$DISABLE_SDIST_BUILD"
+    then
+      echo "'cabal info' command failed to determine package name."
+      die "Please use 'DISABLE_SDIST_BUILD=y' to avoid this issue."
+    fi
+  fi
+
   if test "${pkgname}${full_name#$pkgname}" != "${full_name}"
   then
     die "Inconsistent package name [$pkgname] and package full name [$full_name]"
@@ -902,9 +916,9 @@ get_pkg_full_name() {
 ensure_cabal_config() {
   # When cabal versions change across builds on a CI host its safer to remove
   # the old config so that the build does not error out.
+  local cfg="${OS_APP_HOME}/${OS_CABAL_DIR}/config"
   if test "$CABAL_REINIT_CONFIG" = y
   then
-    local cfg="${OS_APP_HOME}/${OS_CABAL_DIR}/config"
     echo "Removing old cabal config [$cfg]"
     run_verbose_errexit rm -f "$cfg"
   fi
@@ -932,7 +946,10 @@ ensure_cabal_config() {
 
   # cabal 1.22 and earlier do not support this command
   # We rely on the cabal info command to create the config above.
-  #run_verbose cabal user-config init || true
+  if test ! -e $cfg
+  then
+    run_verbose cabal user-config init || true
+  fi
 
   if test "$BUILD" = cabal -o "$BUILD" = "cabal-new"
   then
@@ -1034,7 +1051,7 @@ create_and_unpack_pkg_dist() {
 
   cd ${1}
   show_step "Package info [sdist $SDIST_OPTIONS]"
-  run_verbose cabal info .
+  run_verbose cabal info . || true
 
   if test -f "./configure.ac"
   then
